@@ -288,7 +288,7 @@ async fn main() -> () {
                 save_processed_scores(processed_scores).await;
             });
         }
-        tokio::time::sleep(tokio::time::Duration::from_secs(10)).await;
-        println!("Sleeping for 10 seconds...");
+        tokio::time::sleep(tokio::time::Duration::from_secs(30)).await;
+        println!("Sleeping for 30 seconds...");
     }
 }
