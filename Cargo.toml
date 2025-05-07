@@ -1,0 +1,14 @@
+[package]
+name = "scores"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+rosu-v2 = { git = "https://github.com/MaxOhn/rosu-v2", branch = "lazer" }
+discord-webhook2 = "0.4.3"
+tokio = { version = "1.44.2", features = ["rt-multi-thread", "macros"] }
+dotenvy = "0.15.7"
+reqwest = "0.12.15"
+serde_json = "1.0.140"
+serde = "1.0.219"
+chrono = "0.4.41"
