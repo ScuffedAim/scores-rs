@@ -5,9 +5,7 @@ use discord_webhook2::webhook::DiscordWebhook;
 // use discord_webhook2::message::embed::field::EmbedField;
 use dotenvy::dotenv;
 use rosu_v2::prelude::*;
-use core::time;
 use std::collections::HashMap;
-use std::os::unix::process;
 use std::{env, path};
 
 use reqwest::Client;
@@ -269,7 +267,7 @@ async fn main() -> () {
     let api_key = env::var("API_KEY").unwrap();
     let api_url = "http://localhost:3000/members";
     let osu = Arc::new(Osu::new(env::var("CLIENT_ID").unwrap().parse().unwrap(), env::var("CLIENT_SECRET").unwrap()).await.unwrap());
-    let processed_scores = load_processed_scores().await;
+    let processed_scores = Arc::new(tokio::sync::Mutex::new(load_processed_scores().await));
     loop {
         let members: Vec<_> = get_members(api_url, &api_key).await.unwrap();
         let members = members.into_iter().filter(|member| member.user_id.is_some());
@@ -277,29 +275,33 @@ async fn main() -> () {
         for member in members {
             let member = member.clone();
             let osu = osu.clone();
-            let mut processed_scores = processed_scores.clone();
-            println!("processed {} scores", processed_scores.len());
-            tokio::spawn(async move {
-                let recent_scores = get_recent_scores(&osu, UserId::Id(member.user_id.unwrap())).await;
-                if recent_scores.is_empty() {
-                    println!("No recent scores for user {}", member.user_id.unwrap());
-                    return;
-                }
-                if (recent_scores.iter().all(|score| processed_scores.contains(&score.id))) {
-                    println!("All scores for user {} are already processed", member.user_id.unwrap());
-                    return;
-                }
-                if !path::Path::new("processed_scores.json").exists() {
-                    save_processed_scores(Vec::<u64>::new()).await;
-                }
-                
-                for score in recent_scores {
-                    if !processed_scores.contains(&score.id) {
-                        processed_scores.push(score.id);
-                        send_discord(&osu,score.clone()).await;
+            let processed_scores = Arc::clone(&processed_scores);
+            println!("processed {} scores", processed_scores.lock().await.len());
+            tokio::spawn({
+                let osu = osu.clone();
+                let processed_scores = Arc::clone(&processed_scores);
+                async move {
+                    let recent_scores = get_recent_scores(&osu, UserId::Id(member.user_id.unwrap())).await;
+                    if recent_scores.is_empty() {
+                        println!("No recent scores for user {}", member.user_id.unwrap());
+                        return;
                     }
+                    {
+                        let scores = processed_scores.lock().await;
+                        if recent_scores.iter().all(|score| scores.contains(&score.id)) {
+                            println!("All scores for user {} are already processed", member.user_id.unwrap());
+                            return;
+                        }
+                    }
+                    for score in recent_scores {
+                        let mut scores = processed_scores.lock().await;
+                        if !scores.contains(&score.id) {
+                            scores.push(score.id);
+                            send_discord(&osu, score.clone()).await;
+                        }
+                    }
+                    save_processed_scores(processed_scores.lock().await.clone()).await;
                 }
-                save_processed_scores(processed_scores).await;
             });
         }
         tokio::time::sleep(tokio::time::Duration::from_secs(30)).await;
