@@ -126,7 +126,7 @@ async fn send_discord(osu: &Osu,score:Score) {
     };
     let user_statistics = match user.statistics {
         Some(ref statistics) => statistics,
-        None => &osu.user(user.user_id).await.unwrap().statistics.unwrap(),
+        None => &osu.user(user.user_id).mode(score.mode).await.unwrap().statistics.unwrap(),
     };
     
     let osu_resources = OsuResources::new();
@@ -151,7 +151,7 @@ async fn send_discord(osu: &Osu,score:Score) {
     let country_code = &user.country_code;
     let score_url = format!("https://osu.ppy.sh/scores/{}",score.id);
     
-    let difficulty_attributes = osu.beatmap_difficulty_attributes(score.map_id).mode(GameMode::Osu).mods(score.mods.clone()).await.unwrap();
+    let difficulty_attributes = osu.beatmap_difficulty_attributes(score.map_id).mode(score.mode).mods(score.mods.clone()).await.unwrap();
     
     // scale ar, od, bpm, based on mods
     
