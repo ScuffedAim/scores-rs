@@ -5,6 +5,7 @@ use discord_webhook2::webhook::DiscordWebhook;
 // use discord_webhook2::message::embed::field::EmbedField;
 use dotenvy::dotenv;
 use rosu_v2::prelude::*;
+use core::time;
 use std::collections::HashMap;
 use std::{env, path};
 
@@ -250,6 +251,7 @@ async fn send_discord(osu: &Osu,score:Score) {
                             footer
                                 .text("Scoreposter made by sneznykocur, original idea from reinum <3")
                         })
+                        
                     
                 })
         }
@@ -263,12 +265,14 @@ async fn main() -> () {
     let api_key = env::var("API_KEY").unwrap();
     let api_url = "http://localhost:3000/members";
     let osu = Arc::new(Osu::new(env::var("CLIENT_ID").unwrap().parse().unwrap(), env::var("CLIENT_SECRET").unwrap()).await.unwrap());
+    let processed_scores = load_processed_scores().await;
     loop {
         let members: Vec<_> = get_members(api_url, &api_key).await.unwrap();
         let members = members.into_iter().filter(|member| member.user_id.is_some());
         for member in members {
             let member = member.clone();
             let osu = osu.clone();
+            let mut processed_scores = processed_scores.clone();
             tokio::spawn(async move {
                 let recent_scores = get_recent_scores(&osu, UserId::Id(member.user_id.unwrap())).await;
                 if recent_scores.is_empty() {
@@ -278,7 +282,7 @@ async fn main() -> () {
                 if !path::Path::new("processed_scores.json").exists() {
                     save_processed_scores(Vec::<u64>::new()).await;
                 }
-                let mut processed_scores = load_processed_scores().await;
+                
                 for score in recent_scores {
                     if !processed_scores.contains(&score.id) {
                         processed_scores.push(score.id);
