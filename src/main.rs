@@ -203,14 +203,14 @@ async fn send_discord(osu: &Osu,score:Score) {
 
 ׂ╰┈➤ Scoreׂ
 > {}
-> **{}PP** {}%
+> **{:.2}PP** {:.2}%
 > **{}**/{}x
 > {} <:100:1307101924436344852> / {} <:50:1307101926089031690> / {} <:miss:1307101928718864484>
 
 ׂ╰┈➤ Beatmapׂ
  ```
- CS {} | AR {} | OD {} | HP {}
- {} BPM - {} ⭐ - {}
+ CS {:.2} | AR {:.2} | OD {:.2} | HP {:.2}
+ {} BPM - {:.2} ⭐ - {}
  ```    
 
 [beatmap]({}) • [player]({}) • [score]({})"
@@ -253,8 +253,8 @@ async fn send_discord(osu: &Osu,score:Score) {
                             footer
                                 .text("Scoreposter made by sneznykocur, original idea from reinum <3")
                         })
+                        .timestamp(score.ended_at.into())
                         
-                    
                 })
         }
     );
