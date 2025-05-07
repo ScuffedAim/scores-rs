@@ -275,6 +275,7 @@ async fn main() -> () {
             let member = member.clone();
             let osu = osu.clone();
             let mut processed_scores = processed_scores.clone();
+            println!("processed {} scores", processed_scores.len());
             tokio::spawn(async move {
                 let recent_scores = get_recent_scores(&osu, UserId::Id(member.user_id.unwrap())).await;
                 if recent_scores.is_empty() {
