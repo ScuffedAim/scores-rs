@@ -7,6 +7,7 @@ use dotenvy::dotenv;
 use rosu_v2::prelude::*;
 use core::time;
 use std::collections::HashMap;
+use std::os::unix::process;
 use std::{env, path};
 
 use reqwest::Client;
@@ -269,6 +270,7 @@ async fn main() -> () {
     loop {
         let members: Vec<_> = get_members(api_url, &api_key).await.unwrap();
         let members = members.into_iter().filter(|member| member.user_id.is_some());
+        println!("Found {} members", members.clone().collect::<Vec<_>>().len());
         for member in members {
             let member = member.clone();
             let osu = osu.clone();
@@ -277,6 +279,10 @@ async fn main() -> () {
                 let recent_scores = get_recent_scores(&osu, UserId::Id(member.user_id.unwrap())).await;
                 if recent_scores.is_empty() {
                     println!("No recent scores for user {}", member.user_id.unwrap());
+                    return;
+                }
+                if (recent_scores.iter().all(|score| processed_scores.contains(&score.id))) {
+                    println!("All scores for user {} are already processed", member.user_id.unwrap());
                     return;
                 }
                 if !path::Path::new("processed_scores.json").exists() {
