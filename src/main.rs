@@ -153,6 +153,17 @@ async fn send_discord(osu: &Osu,score:Score) {
     
     let difficulty_attributes = osu.beatmap_difficulty_attributes(score.map_id).mode(score.mode).mods(score.mods.clone()).await.unwrap();
     
+    let status = match mapset.status {
+        RankStatus::Graveyard => "Graveyard",
+        RankStatus::WIP => "WIP",
+        RankStatus::Ranked => "Ranked",
+        RankStatus::Approved => "Approved",
+        RankStatus::Qualified => "Qualified",
+        RankStatus::Loved => "Loved",
+        RankStatus::Pending => "Pending",
+    };
+
+
     // scale ar, od, bpm, based on mods
     
     let clock_rate = match score.mods.clock_rate() {
@@ -251,7 +262,7 @@ async fn send_discord(osu: &Osu,score:Score) {
                         })
                         .footer(|footer| {
                             footer
-                                .text("Scoreposter made by sneznykocur, original idea from reinum <3")
+                                .text(format!("{} - {}",status,mapset.creator_name))
                         })
                         .timestamp(score.ended_at.into())
                         
