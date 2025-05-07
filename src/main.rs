@@ -93,6 +93,9 @@ async fn get_members(api_url: &str, token: &str) -> Result<Vec<scuffedaim::Membe
 
 async fn load_processed_scores() -> Vec<u64> {
 
+    if !path::Path::new("processed_scores.json").exists() {
+        return Vec::<u64>::new();
+    }
     let file = std::fs::File::open("processed_scores.json").unwrap();
     let reader = std::io::BufReader::new(file);
     let scores: Vec<u64> = serde_json::from_reader(reader).unwrap();
